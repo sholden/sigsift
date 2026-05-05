@@ -1,6 +1,6 @@
 class SourcesController < ApplicationController
   before_action :set_opportunity
-  before_action :set_source, only: %i[show edit update destroy]
+  before_action :set_source, only: %i[show edit update destroy scan]
 
   def show
     @scan_runs = @source.scan_runs.recent
@@ -28,6 +28,11 @@ class SourcesController < ApplicationController
     else
       render :edit, status: :unprocessable_entity
     end
+  end
+
+  def scan
+    ScanSourceJob.perform_later(@source.id)
+    redirect_to opportunity_source_path(@opportunity, @source), notice: "Scan started."
   end
 
   def destroy

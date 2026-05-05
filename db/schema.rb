@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_05_203300) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_05_210410) do
   create_table "accounts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name"
@@ -70,6 +70,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_05_203300) do
     t.string "deadline_text"
     t.text "description"
     t.string "estimated_budget"
+    t.string "fingerprint"
     t.integer "found_by_id", null: false
     t.string "location"
     t.text "raw_text"
@@ -81,6 +82,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_05_203300) do
     t.datetime "updated_at", null: false
     t.index ["found_by_id"], name: "index_potential_leads_on_found_by_id"
     t.index ["review_status"], name: "index_potential_leads_on_review_status"
+    t.index ["source_id", "fingerprint"], name: "index_potential_leads_on_source_id_and_fingerprint"
     t.index ["source_id", "review_status"], name: "index_potential_leads_on_source_id_and_review_status"
     t.index ["source_id"], name: "index_potential_leads_on_source_id"
   end

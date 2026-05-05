@@ -5,7 +5,9 @@ Rails.application.routes.draw do
   resources :passwords, param: :token
 
   resources :opportunities do
-    resources :sources
+    resources :sources do
+      member { post :scan }
+    end
   end
 
   resources :leads

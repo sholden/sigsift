@@ -8,7 +8,14 @@ class Opportunity < ApplicationRecord
   validates :name, presence: true
   validates :status, presence: true
 
+  after_save :enqueue_criteria_extraction, if: :saved_change_to_criteria_text?
+
   scope :ordered, -> { order(:name) }
+
+  def enqueue_criteria_extraction
+    ExtractOpportunityCriteriaJob.perform_later(id)
+  end
+  private :enqueue_criteria_extraction
 
   def criteria_structured_data
     return {} if criteria_structured.blank?

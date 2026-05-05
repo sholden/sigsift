@@ -1,5 +1,7 @@
 <% content_for :title, "#{@source.name} — Sigsift" %>
 
+<%= turbo_stream_from "source_#{@source.id}" %>
+
 <div class="mb-6">
   <nav class="text-sm text-gray-500 mb-2">
     <%= link_to "Opportunities", opportunities_path, class: "hover:text-gray-700" %> /
@@ -14,10 +16,15 @@
       <% end %>
     </div>
     <div class="flex items-center gap-2">
+      <%= button_to "Scan Now", scan_opportunity_source_path(@opportunity, @source), class: "inline-flex items-center px-3 py-1.5 rounded-md bg-indigo-600 text-sm font-medium text-white hover:bg-indigo-700" %>
       <%= link_to "Edit", edit_opportunity_source_path(@opportunity, @source), class: "inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50" %>
       <%= button_to "Remove", opportunity_source_path(@opportunity, @source), method: :delete, data: { turbo_confirm: "Remove this source?" }, class: "inline-flex items-center px-3 py-1.5 rounded-md border border-red-200 text-sm font-medium text-red-600 hover:bg-red-50" %>
     </div>
   </div>
+</div>
+
+<div class="mb-6 bg-white rounded-lg border border-gray-200 p-4">
+  <%= render "scan_status", scan_run: @scan_runs.first %>
 </div>
 
 <div class="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-6">
