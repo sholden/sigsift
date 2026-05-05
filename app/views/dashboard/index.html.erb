@@ -1,0 +1,73 @@
+<% content_for :title, "Dashboard — Sigsift" %>
+
+<div class="mb-8">
+  <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+  <p class="mt-1 text-sm text-gray-500">Welcome to Sigsift. Here's what's happening.</p>
+</div>
+
+<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+  <div class="bg-white rounded-lg border border-gray-200 p-6">
+    <p class="text-sm font-medium text-gray-500">Active Opportunities</p>
+    <p class="mt-2 text-3xl font-bold text-gray-900"><%= @opportunities.count %></p>
+  </div>
+  <div class="bg-white rounded-lg border border-gray-200 p-6">
+    <p class="text-sm font-medium text-gray-500">Pending Review</p>
+    <p class="mt-2 text-3xl font-bold text-indigo-600"><%= @pending_review_count %></p>
+    <% if @pending_review_count > 0 %>
+      <%= link_to "Review now →", potential_leads_path, class: "mt-2 text-xs text-indigo-600 hover:underline block" %>
+    <% end %>
+  </div>
+  <div class="bg-white rounded-lg border border-gray-200 p-6">
+    <p class="text-sm font-medium text-gray-500">Leads Tracking</p>
+    <p class="mt-2 text-3xl font-bold text-gray-900"><%= @leads_by_status["tracking"].to_i %></p>
+  </div>
+  <div class="bg-white rounded-lg border border-gray-200 p-6">
+    <p class="text-sm font-medium text-gray-500">Proposals Sent</p>
+    <p class="mt-2 text-3xl font-bold text-gray-900"><%= @leads_by_status["proposal_sent"].to_i %></p>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+  <div class="bg-white rounded-lg border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="text-sm font-semibold text-gray-900">Active Opportunities</h2>
+      <%= link_to "View all", opportunities_path, class: "text-xs text-indigo-600 hover:underline" %>
+    </div>
+    <ul class="divide-y divide-gray-100">
+      <% if @opportunities.empty? %>
+        <li class="px-6 py-8 text-center text-sm text-gray-500">
+          No opportunities yet. <%= link_to "Create one", new_opportunity_path, class: "text-indigo-600 hover:underline" %>.
+        </li>
+      <% else %>
+        <% @opportunities.first(5).each do |opp| %>
+          <li class="px-6 py-3 flex items-center justify-between hover:bg-gray-50">
+            <%= link_to opp.name, opp, class: "text-sm font-medium text-gray-900 hover:text-indigo-600" %>
+            <span class="text-xs text-gray-400"><%= opp.sources.count %> sources</span>
+          </li>
+        <% end %>
+      <% end %>
+    </ul>
+  </div>
+
+  <div class="bg-white rounded-lg border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="text-sm font-semibold text-gray-900">Upcoming Deadlines</h2>
+      <%= link_to "All leads", leads_path, class: "text-xs text-indigo-600 hover:underline" %>
+    </div>
+    <ul class="divide-y divide-gray-100">
+      <% if @upcoming_deadlines.empty? %>
+        <li class="px-6 py-8 text-center text-sm text-gray-500">No upcoming deadlines in the next 30 days.</li>
+      <% else %>
+        <% @upcoming_deadlines.each do |lead| %>
+          <li class="px-6 py-3 flex items-center justify-between hover:bg-gray-50">
+            <div>
+              <%= link_to lead.title, lead, class: "text-sm font-medium text-gray-900 hover:text-indigo-600" %>
+              <p class="text-xs text-gray-400"><%= lead.opportunity.name %></p>
+            </div>
+            <span class="text-xs font-medium text-orange-600"><%= lead.deadline.strftime("%b %-d") %></span>
+          </li>
+        <% end %>
+      <% end %>
+    </ul>
+  </div>
+</div>

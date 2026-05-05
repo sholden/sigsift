@@ -1,0 +1,57 @@
+<div id="<%= dom_id(potential_lead) %>" class="bg-white rounded-lg border border-gray-200 p-5">
+  <div class="flex items-start justify-between gap-4">
+    <div class="flex-1 min-w-0">
+      <div class="flex items-start gap-3 flex-wrap">
+        <h3 class="text-base font-semibold text-gray-900"><%= potential_lead.title %></h3>
+        <% if potential_lead.confidence_score.present? %>
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+            <%= (potential_lead.confidence_score * 100).round %>% confidence
+          </span>
+        <% end %>
+      </div>
+
+      <div class="mt-1 flex items-center gap-3 text-xs text-gray-400 flex-wrap">
+        <span><%= potential_lead.source.opportunity.name %></span>
+        <span>via <%= potential_lead.source.name %></span>
+        <% if potential_lead.client_name.present? %>
+          <span><%= potential_lead.client_name %></span>
+        <% end %>
+        <% if potential_lead.location.present? %>
+          <span><%= potential_lead.location %></span>
+        <% end %>
+        <% if potential_lead.deadline_date.present? %>
+          <span>Due <%= potential_lead.deadline_date.strftime("%b %-d, %Y") %></span>
+        <% elsif potential_lead.deadline_text.present? %>
+          <span><%= potential_lead.deadline_text %></span>
+        <% end %>
+        <% if potential_lead.estimated_budget.present? %>
+          <span><%= potential_lead.estimated_budget %></span>
+        <% end %>
+      </div>
+
+      <% if potential_lead.description.present? %>
+        <p class="mt-2 text-sm text-gray-600 line-clamp-3"><%= potential_lead.description %></p>
+      <% end %>
+
+      <% if potential_lead.source_url.present? %>
+        <a href="<%= potential_lead.source_url %>" target="_blank" rel="noopener" class="mt-2 text-xs text-indigo-600 hover:underline block truncate"><%= potential_lead.source_url %></a>
+      <% end %>
+
+      <% detection = potential_lead.lead_detections.order(created_at: :desc).first %>
+      <% if detection.present? %>
+        <p class="mt-2 text-xs text-gray-400 italic"><%= detection.description %></p>
+      <% end %>
+    </div>
+
+    <div class="flex flex-col gap-2 flex-shrink-0">
+      <%= button_to "Create Lead", potential_lead_path(potential_lead),
+            method: :patch,
+            params: { review_action: "create_lead" },
+            class: "inline-flex items-center justify-center px-3 py-1.5 rounded-md bg-indigo-600 text-sm font-medium text-white hover:bg-indigo-700 whitespace-nowrap" %>
+      <%= button_to "Dismiss", potential_lead_path(potential_lead),
+            method: :patch,
+            params: { review_action: "dismiss" },
+            class: "inline-flex items-center justify-center px-3 py-1.5 rounded-md border border-gray-200 text-sm font-medium text-gray-500 hover:bg-gray-50 whitespace-nowrap" %>
+    </div>
+  </div>
+</div>

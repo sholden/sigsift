@@ -1,0 +1,33 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  source: one
+  title: MyString
+  description: MyText
+  raw_text: MyText
+  client_name: MyString
+  location: MyString
+  source_url: MyString
+  estimated_budget: MyString
+  deadline_text: MyString
+  deadline_date: 2026-05-05
+  contact_info: MyText
+  confidence_score: 1.5
+  review_status: MyString
+  reviewed_at: 2026-05-05 13:32:55
+
+two:
+  source: two
+  title: MyString
+  description: MyText
+  raw_text: MyText
+  client_name: MyString
+  location: MyString
+  source_url: MyString
+  estimated_budget: MyString
+  deadline_text: MyString
+  deadline_date: 2026-05-05
+  contact_info: MyText
+  confidence_score: 1.5
+  review_status: MyString
+  reviewed_at: 2026-05-05 13:32:55

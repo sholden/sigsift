@@ -1,2 +1,8 @@
 #!/usr/bin/env ruby
-exec "./bin/rails", "server", *ARGV
+web  = Process.spawn("bin/rails", "server", *ARGV)
+vite = Process.spawn("bin/vite", "dev")
+
+trap("INT")  { Process.kill("INT",  web); Process.kill("INT",  vite) }
+trap("TERM") { Process.kill("TERM", web); Process.kill("TERM", vite) }
+
+Process.waitall

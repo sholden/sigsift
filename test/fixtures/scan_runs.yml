@@ -1,0 +1,21 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  source: one
+  status: MyString
+  summary: MyText
+  agent_context: MyText
+  started_at: 2026-05-05 13:32:42
+  completed_at: 2026-05-05 13:32:42
+  error_message: MyText
+  job_id: MyString
+
+two:
+  source: two
+  status: MyString
+  summary: MyText
+  agent_context: MyText
+  started_at: 2026-05-05 13:32:42
+  completed_at: 2026-05-05 13:32:42
+  error_message: MyText
+  job_id: MyString

@@ -1,0 +1,21 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  opportunity: one
+  name: MyString
+  url: MyString
+  description: MyText
+  notes: MyText
+  status: MyString
+  last_scanned_at: 2026-05-05 13:32:27
+  scan_frequency_days: 1
+
+two:
+  opportunity: two
+  name: MyString
+  url: MyString
+  description: MyText
+  notes: MyText
+  status: MyString
+  last_scanned_at: 2026-05-05 13:32:27
+  scan_frequency_days: 1

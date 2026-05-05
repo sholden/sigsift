@@ -1,0 +1,90 @@
+<% content_for :title, "#{@opportunity.name} — Sigsift" %>
+
+<div class="mb-6">
+  <nav class="text-sm text-gray-500 mb-2">
+    <%= link_to "Opportunities", opportunities_path, class: "hover:text-gray-700" %> /
+    <span class="text-gray-900"><%= @opportunity.name %></span>
+  </nav>
+  <div class="flex items-start justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900"><%= @opportunity.name %></h1>
+      <% if @opportunity.description.present? %>
+        <p class="mt-1 text-sm text-gray-500"><%= @opportunity.description %></p>
+      <% end %>
+    </div>
+    <div class="flex items-center gap-2">
+      <%= link_to "Edit", edit_opportunity_path(@opportunity), class: "inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50" %>
+      <%= button_to "Delete", @opportunity, method: :delete, data: { turbo_confirm: "Delete this opportunity and all its data?" }, class: "inline-flex items-center px-3 py-1.5 rounded-md border border-red-200 text-sm font-medium text-red-600 hover:bg-red-50" %>
+    </div>
+  </div>
+</div>
+
+<% if @opportunity.criteria_text.present? %>
+  <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-4 mb-6">
+    <p class="text-xs font-semibold text-indigo-700 mb-1">Search criteria</p>
+    <p class="text-sm text-indigo-900"><%= @opportunity.criteria_text %></p>
+  </div>
+<% end %>
+
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+  <div>
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-base font-semibold text-gray-900">Sources</h2>
+      <%= link_to "Add source", new_opportunity_source_path(@opportunity), class: "text-sm text-indigo-600 hover:underline" %>
+    </div>
+    <% if @sources.empty? %>
+      <div class="bg-white rounded-lg border border-dashed border-gray-300 p-6 text-center">
+        <p class="text-sm text-gray-500 mb-3">No sources yet. Add a URL to start scanning.</p>
+        <%= link_to "Add first source", new_opportunity_source_path(@opportunity), class: "text-sm text-indigo-600 hover:underline" %>
+      </div>
+    <% else %>
+      <div class="space-y-2">
+        <% @sources.each do |source| %>
+          <div class="bg-white rounded-lg border border-gray-200 p-4 flex items-start justify-between">
+            <div class="flex-1 min-w-0">
+              <%= link_to source.name, opportunity_source_path(@opportunity, source), class: "text-sm font-medium text-gray-900 hover:text-indigo-600" %>
+              <% if source.url.present? %>
+                <p class="text-xs text-gray-400 truncate mt-0.5"><%= source.url %></p>
+              <% end %>
+              <div class="mt-1 flex items-center gap-3 text-xs text-gray-400">
+                <span>Every <%= source.scan_frequency_days %> days</span>
+                <% if source.last_scanned_at %>
+                  <span>Last scanned <%= time_ago_in_words(source.last_scanned_at) %> ago</span>
+                <% else %>
+                  <span class="text-orange-500">Never scanned</span>
+                <% end %>
+              </div>
+            </div>
+            <% unless source.active? %>
+              <span class="ml-3 text-xs text-gray-400"><%= source.status %></span>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <div>
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-base font-semibold text-gray-900">Leads</h2>
+      <%= link_to "Add lead", new_lead_path(opportunity_id: @opportunity.id), class: "text-sm text-indigo-600 hover:underline" %>
+    </div>
+    <% if @leads.empty? %>
+      <div class="bg-white rounded-lg border border-dashed border-gray-300 p-6 text-center">
+        <p class="text-sm text-gray-500">No leads yet.</p>
+      </div>
+    <% else %>
+      <div class="space-y-2">
+        <% @leads.first(8).each do |lead| %>
+          <div class="bg-white rounded-lg border border-gray-200 p-4 flex items-center justify-between">
+            <%= link_to lead.title, lead, class: "text-sm font-medium text-gray-900 hover:text-indigo-600 flex-1 min-w-0 truncate" %>
+            <%= lead_status_badge(lead.status) %>
+          </div>
+        <% end %>
+        <% if @leads.count > 8 %>
+          <%= link_to "View all #{@leads.count} leads →", leads_path, class: "text-sm text-indigo-600 hover:underline block text-center mt-2" %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

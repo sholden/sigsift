@@ -1,0 +1,52 @@
+<% content_for :title, "Leads — Sigsift" %>
+
+<div class="mb-6 flex items-center justify-between">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Leads</h1>
+    <p class="mt-1 text-sm text-gray-500">Track your pipeline of business opportunities.</p>
+  </div>
+  <%= link_to "New lead", new_lead_path, class: "inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-sm font-medium text-white hover:bg-indigo-700" %>
+</div>
+
+<% if @leads.empty? %>
+  <div class="text-center py-16 bg-white rounded-lg border border-gray-200">
+    <p class="text-gray-500 text-sm mb-4">No active leads yet. They'll appear here once you start reviewing findings.</p>
+    <%= link_to "Review queue", potential_leads_path, class: "text-sm text-indigo-600 hover:underline" %>
+  </div>
+<% else %>
+  <% Lead.statuses.keys.each do |status| %>
+    <% group = @leads_by_status[status] %>
+    <% next if group.blank? %>
+    <div class="mb-8">
+      <div class="flex items-center gap-3 mb-3">
+        <%= lead_status_badge(status) %>
+        <span class="text-sm text-gray-400"><%= group.count %></span>
+      </div>
+      <div class="space-y-2">
+        <% group.each do |lead| %>
+          <div class="bg-white rounded-lg border border-gray-200 p-4 flex items-start justify-between hover:border-indigo-200 transition-colors">
+            <div class="flex-1 min-w-0">
+              <%= link_to lead.title, lead, class: "text-sm font-medium text-gray-900 hover:text-indigo-600" %>
+              <div class="mt-1 flex items-center gap-3 text-xs text-gray-400 flex-wrap">
+                <span><%= lead.opportunity.name %></span>
+                <% if lead.client_name.present? %>
+                  <span><%= lead.client_name %></span>
+                <% end %>
+                <% if lead.deadline.present? %>
+                  <span class="<%= lead.deadline < Date.current ? 'text-red-500' : lead.deadline < 30.days.from_now.to_date ? 'text-orange-500' : '' %>">Due <%= lead.deadline.strftime("%b %-d, %Y") %></span>
+                <% end %>
+                <% if lead.estimated_budget_cents.present? %>
+                  <span><%= lead.budget_display %></span>
+                <% end %>
+              </div>
+            </div>
+            <div class="ml-4 flex items-center gap-2 flex-shrink-0">
+              <%= lead_priority_badge(lead.priority) if lead.priority.present? %>
+              <%= link_to "Edit", edit_lead_path(lead), class: "text-xs text-gray-400 hover:text-gray-600" %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+<% end %>

@@ -1,0 +1,42 @@
+<% content_for :title, "Opportunities — Sigsift" %>
+
+<div class="mb-6 flex items-center justify-between">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Opportunities</h1>
+    <p class="mt-1 text-sm text-gray-500">Define what you're hunting for.</p>
+  </div>
+  <%= link_to "New opportunity", new_opportunity_path, class: "inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-sm font-medium text-white hover:bg-indigo-700" %>
+</div>
+
+<% if @opportunities.empty? %>
+  <div class="text-center py-16 bg-white rounded-lg border border-gray-200">
+    <p class="text-gray-500 text-sm mb-4">No opportunities yet. Create one to start sifting for leads.</p>
+    <%= link_to "Create your first opportunity", new_opportunity_path, class: "inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-sm font-medium text-white hover:bg-indigo-700" %>
+  </div>
+<% else %>
+  <div class="space-y-3">
+    <% @opportunities.each do |opp| %>
+      <div class="bg-white rounded-lg border border-gray-200 p-5 flex items-start justify-between hover:border-indigo-200 transition-colors">
+        <div class="flex-1 min-w-0">
+          <%= link_to opp.name, opp, class: "text-base font-semibold text-gray-900 hover:text-indigo-600" %>
+          <% if opp.description.present? %>
+            <p class="mt-1 text-sm text-gray-500 truncate"><%= opp.description %></p>
+          <% end %>
+          <% if opp.criteria_text.present? %>
+            <p class="mt-2 text-xs text-gray-400 italic truncate"><%= opp.criteria_text %></p>
+          <% end %>
+          <div class="mt-2 flex items-center gap-4 text-xs text-gray-400">
+            <span><%= opp.sources.count %> sources</span>
+            <span><%= opp.leads.active.count %> leads</span>
+          </div>
+        </div>
+        <div class="ml-4 flex items-center gap-2 flex-shrink-0">
+          <% unless opp.active? %>
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600"><%= opp.status.capitalize %></span>
+          <% end %>
+          <%= link_to "Edit", edit_opportunity_path(opp), class: "text-sm text-gray-500 hover:text-gray-700" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

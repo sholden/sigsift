@@ -1,0 +1,96 @@
+<% content_for :title, "#{@source.name} — Sigsift" %>
+
+<div class="mb-6">
+  <nav class="text-sm text-gray-500 mb-2">
+    <%= link_to "Opportunities", opportunities_path, class: "hover:text-gray-700" %> /
+    <%= link_to @opportunity.name, @opportunity, class: "hover:text-gray-700" %> /
+    <span class="text-gray-900"><%= @source.name %></span>
+  </nav>
+  <div class="flex items-start justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900"><%= @source.name %></h1>
+      <% if @source.url.present? %>
+        <a href="<%= @source.url %>" target="_blank" rel="noopener" class="text-sm text-indigo-600 hover:underline mt-1 block"><%= @source.url %></a>
+      <% end %>
+    </div>
+    <div class="flex items-center gap-2">
+      <%= link_to "Edit", edit_opportunity_source_path(@opportunity, @source), class: "inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50" %>
+      <%= button_to "Remove", opportunity_source_path(@opportunity, @source), method: :delete, data: { turbo_confirm: "Remove this source?" }, class: "inline-flex items-center px-3 py-1.5 rounded-md border border-red-200 text-sm font-medium text-red-600 hover:bg-red-50" %>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-6">
+  <% if @source.description.present? %>
+    <div class="bg-white rounded-lg border border-gray-200 p-4">
+      <p class="text-xs font-semibold text-gray-500 mb-1">Description</p>
+      <p class="text-sm text-gray-900"><%= @source.description %></p>
+    </div>
+  <% end %>
+  <% if @source.notes.present? %>
+    <div class="bg-white rounded-lg border border-gray-200 p-4">
+      <p class="text-xs font-semibold text-gray-500 mb-1">Agent notes</p>
+      <p class="text-sm text-gray-900"><%= @source.notes %></p>
+    </div>
+  <% end %>
+  <div class="bg-white rounded-lg border border-gray-200 p-4">
+    <p class="text-xs font-semibold text-gray-500 mb-1">Scan frequency</p>
+    <p class="text-sm text-gray-900">Every <%= @source.scan_frequency_days %> days</p>
+    <% if @source.last_scanned_at %>
+      <p class="text-xs text-gray-400 mt-1">Last scanned <%= time_ago_in_words(@source.last_scanned_at) %> ago</p>
+    <% else %>
+      <p class="text-xs text-orange-500 mt-1">Never scanned</p>
+    <% end %>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+  <div>
+    <h2 class="text-base font-semibold text-gray-900 mb-3">Scan History</h2>
+    <% if @scan_runs.empty? %>
+      <div class="bg-white rounded-lg border border-dashed border-gray-300 p-6 text-center">
+        <p class="text-sm text-gray-500">No scans yet.</p>
+      </div>
+    <% else %>
+      <div class="space-y-2">
+        <% @scan_runs.each do |run| %>
+          <div class="bg-white rounded-lg border border-gray-200 p-4">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-medium <%= run.completed? ? 'text-green-600' : run.failed? ? 'text-red-600' : run.no_op? ? 'text-gray-400' : 'text-blue-600' %>"><%= run.status.humanize %></span>
+              <span class="text-xs text-gray-400"><%= time_ago_in_words(run.created_at) %> ago</span>
+            </div>
+            <% if run.summary.present? %>
+              <p class="text-sm text-gray-700"><%= run.summary %></p>
+            <% end %>
+            <% if run.error_message.present? %>
+              <p class="text-xs text-red-500 mt-1"><%= run.error_message %></p>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <div>
+    <h2 class="text-base font-semibold text-gray-900 mb-3">Recent Findings</h2>
+    <% if @potential_leads.empty? %>
+      <div class="bg-white rounded-lg border border-dashed border-gray-300 p-6 text-center">
+        <p class="text-sm text-gray-500">No findings yet.</p>
+      </div>
+    <% else %>
+      <div class="space-y-2">
+        <% @potential_leads.each do |pl| %>
+          <div class="bg-white rounded-lg border border-gray-200 p-4">
+            <div class="flex items-start justify-between">
+              <p class="text-sm font-medium text-gray-900 flex-1"><%= pl.title %></p>
+              <span class="ml-2 text-xs <%= pl.pending? ? 'text-yellow-600' : pl.created_lead? ? 'text-green-600' : 'text-gray-400' %>"><%= pl.review_status.humanize %></span>
+            </div>
+            <% if pl.client_name.present? %>
+              <p class="text-xs text-gray-400 mt-1"><%= pl.client_name %></p>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
