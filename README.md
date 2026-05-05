@@ -1,24 +1,15 @@
-# README
+# Sigsift
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+A lead-generation tool for small firms. Define what you're hunting for, point it at sources, and an AI agent surfaces opportunities into a review queue.
 
-Things you may want to cover:
+For project context, vocabulary, and architecture, see [docs/overview.md](docs/overview.md).
 
-* Ruby version
+## Quick start
 
-* System dependencies
+```bash
+bin/setup
+npx playwright install chromium    # one-time, for the scanning agent
+bin/dev
+```
 
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+Default seeded user: `scott@holdenarchitecture.com` / `password`.
