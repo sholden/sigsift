@@ -27,6 +27,31 @@
   </div>
 </div>
 
+<% if @sources_needing_attention.any? %>
+  <div class="mb-6 bg-amber-50 border border-amber-200 rounded-lg">
+    <div class="px-6 py-4 border-b border-amber-200">
+      <h2 class="text-sm font-semibold text-amber-900">Sources needing attention</h2>
+      <p class="text-xs text-amber-800 mt-0.5">Auto-paused after 3 failed scans, or currently failing. Review and re-activate when fixed.</p>
+    </div>
+    <ul class="divide-y divide-amber-200">
+      <% @sources_needing_attention.each do |source| %>
+        <li class="px-6 py-3 flex items-center justify-between hover:bg-amber-100">
+          <div class="min-w-0 flex-1">
+            <%= link_to source.name, opportunity_source_path(source.opportunity, source), class: "text-sm font-medium text-amber-900 hover:underline" %>
+            <p class="text-xs text-amber-700"><%= source.opportunity.name %></p>
+          </div>
+          <div class="flex items-center gap-2 ml-4">
+            <% if source.status == "paused" %>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">Paused</span>
+            <% end %>
+            <span class="text-xs text-amber-700"><%= source.consecutive_failure_count %> failure<%= "s" unless source.consecutive_failure_count == 1 %></span>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
+
 <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
   <div class="bg-white rounded-lg border border-gray-200">
     <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">

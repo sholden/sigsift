@@ -1,14 +1,14 @@
 module Scanning
   class AgentRunner
-    def initialize(source:, opportunity:, previous_context: nil, adapter: nil)
+    def initialize(source:, opportunity:, previous_context: nil, strategy: nil)
       @source = source
       @opportunity = opportunity
       @previous_context = previous_context
-      @adapter = adapter || default_adapter.new
+      @strategy = strategy || default_strategy.new
     end
 
     def call
-      @adapter.call(
+      @strategy.call(
         source: @source,
         opportunity: @opportunity,
         previous_context: @previous_context
@@ -17,8 +17,8 @@ module Scanning
 
     private
 
-    def default_adapter
-      Rails.application.config.x.scanning.adapter_name.constantize
+    def default_strategy
+      Rails.application.config.x.scanning.strategy_name.constantize
     end
   end
 end

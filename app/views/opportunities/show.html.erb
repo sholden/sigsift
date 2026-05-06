@@ -45,7 +45,12 @@
         <% @sources.each do |source| %>
           <div class="bg-white rounded-lg border border-gray-200 p-4 flex items-start justify-between">
             <div class="flex-1 min-w-0">
-              <%= link_to source.name, opportunity_source_path(@opportunity, source), class: "text-sm font-medium text-gray-900 hover:text-indigo-600" %>
+              <div class="flex items-center gap-2">
+                <% if source.consecutive_failure_count > 0 %>
+                  <span class="inline-block w-2 h-2 rounded-full bg-red-500" title="<%= source.consecutive_failure_count %> consecutive failure<%= "s" unless source.consecutive_failure_count == 1 %>"></span>
+                <% end %>
+                <%= link_to source.name, opportunity_source_path(@opportunity, source), class: "text-sm font-medium text-gray-900 hover:text-indigo-600" %>
+              </div>
               <% if source.url.present? %>
                 <p class="text-xs text-gray-400 truncate mt-0.5"><%= source.url %></p>
               <% end %>
@@ -59,7 +64,7 @@
               </div>
             </div>
             <% unless source.active? %>
-              <span class="ml-3 text-xs text-gray-400"><%= source.status %></span>
+              <span class="ml-3 text-xs <%= source.status == "paused" ? "text-red-600 font-medium" : "text-gray-400" %>"><%= source.status %></span>
             <% end %>
           </div>
         <% end %>

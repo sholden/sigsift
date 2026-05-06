@@ -2,6 +2,7 @@ class ScanRun < ApplicationRecord
   belongs_to :source
   has_many :potential_leads, foreign_key: :found_by_id
   has_many :lead_detections
+  has_one :trace, class_name: "ScanRunTrace", dependent: :destroy
 
   enum :status, {
     pending: "pending",

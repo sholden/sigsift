@@ -1,33 +1,33 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
-
 one:
   source: one
-  title: MyString
-  description: MyText
-  raw_text: MyText
-  client_name: MyString
-  location: MyString
-  source_url: MyString
-  estimated_budget: MyString
-  deadline_text: MyString
-  deadline_date: 2026-05-05
-  contact_info: MyText
-  confidence_score: 1.5
-  review_status: MyString
-  reviewed_at: 2026-05-05 13:32:55
+  found_by: one
+  title: Sample Roofing Project
+  description: Sample description
+  raw_text: Sample raw text
+  client_name: Acme Corp
+  location: Baton Rouge, LA
+  source_url: https://example.com/bid/1
+  estimated_budget: $500k
+  deadline_text: Due March 15
+  deadline_date: 2026-03-15
+  contact_info: '{"email":"contact@example.com"}'
+  confidence_score: 0.85
+  review_status: pending
+  fingerprint: abc123fingerprint1
 
 two:
   source: two
-  title: MyString
-  description: MyText
-  raw_text: MyText
-  client_name: MyString
-  location: MyString
-  source_url: MyString
-  estimated_budget: MyString
-  deadline_text: MyString
-  deadline_date: 2026-05-05
-  contact_info: MyText
-  confidence_score: 1.5
-  review_status: MyString
-  reviewed_at: 2026-05-05 13:32:55
+  found_by: two
+  title: Sample Building Renovation
+  description: Sample description
+  raw_text: Sample raw text
+  client_name: Beta Inc
+  location: New Orleans, LA
+  source_url: https://example.com/bid/2
+  estimated_budget: $1M
+  deadline_text: Due April 1
+  deadline_date: 2026-04-01
+  contact_info: '{"email":"contact2@example.com"}'
+  confidence_score: 0.75
+  review_status: pending
+  fingerprint: def456fingerprint2

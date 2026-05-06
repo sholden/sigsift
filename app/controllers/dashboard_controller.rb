@@ -16,5 +16,10 @@ class DashboardController < ApplicationController
                               .where("deadline >= ? AND deadline <= ?", Date.current, 30.days.from_now)
                               .by_deadline
                               .limit(5)
+    @sources_needing_attention = Source.joins(:opportunity)
+                                       .where(opportunities: { account: current_account })
+                                       .where("sources.consecutive_failure_count > 0 OR sources.status = ?", "paused")
+                                       .order(consecutive_failure_count: :desc)
+                                       .limit(10)
   end
 end

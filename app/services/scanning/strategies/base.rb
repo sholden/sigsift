@@ -1,8 +1,11 @@
 module Scanning
-  module Adapters
+  module Strategies
     class Base
-      Result = Data.define(:findings, :agent_context, :summary)
-
+      # Strategies return a Scanning::ScanResult variant:
+      #   ScanResult::Findings(findings:, summary:, agent_context:, metrics:)
+      #   ScanResult::Escalated(reason:, agent_context:, metrics:)
+      #   ScanResult::Failed(error_message:, agent_context:, metrics:)
+      #
       # findings: Array of hashes with keys:
       #   title:                 String (required)
       #   description:           String
@@ -16,8 +19,8 @@ module Scanning
       #   confidence_score:      Float 0.0–1.0
       #   detection_description: String (how/where it was found)
       #
-      # agent_context: String (JSON for next run's memory)
-      # summary:       String (human-readable description of what happened)
+      # metrics: Hash with tool_calls_count, total_input_tokens, total_output_tokens, total_cost_cents
+      # messages: Array (the full ruby-llm chat.messages history) for trace persistence
 
       def call(source:, opportunity:, previous_context: nil)
         raise NotImplementedError, "#{self.class} must implement #call"

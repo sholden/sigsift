@@ -72,6 +72,17 @@
             <% if run.error_message.present? %>
               <p class="text-xs text-red-500 mt-1"><%= run.error_message %></p>
             <% end %>
+            <% if run.tool_calls_count.to_i > 0 || run.total_cost_cents.to_i > 0 %>
+              <div class="mt-2 text-xs text-gray-400 flex items-center gap-3">
+                <span><%= run.tool_calls_count %> tool calls</span>
+                <span>$<%= ((run.total_cost_cents || 0) / 100.0).round(4) %></span>
+                <%= link_to "View trace",
+                            trace_opportunity_source_scan_run_path(@opportunity, @source, run),
+                            data: { turbo_frame: "scan_run_trace_#{run.id}" },
+                            class: "text-indigo-600 hover:underline ml-auto" %>
+              </div>
+              <turbo-frame id="scan_run_trace_<%= run.id %>" class="block mt-2"></turbo-frame>
+            <% end %>
           </div>
         <% end %>
       </div>

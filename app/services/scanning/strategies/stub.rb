@@ -1,21 +1,25 @@
 module Scanning
-  module Adapters
+  module Strategies
     class Stub < Base
       def call(source:, opportunity:, previous_context: nil)
         findings = generate_findings(source, opportunity)
         summary = findings.any? ? "Found #{findings.count} potential #{"lead".pluralize(findings.count)}." : "No new findings."
 
-        Result.new(
+        agent_context = { scanned_at: Time.current.iso8601, items_seen: findings.count }.to_json
+        metrics = { tool_calls_count: 0, total_input_tokens: 0, total_output_tokens: 0, total_cost_cents: 0 }
+
+        ScanResult::Findings.new(
           findings: findings,
-          agent_context: { scanned_at: Time.current.iso8601, items_seen: findings.count }.to_json,
-          summary: summary
+          summary: summary,
+          agent_context: agent_context,
+          metrics: metrics,
+          messages: []
         )
       end
 
       private
 
       def generate_findings(source, opportunity)
-        # Return 0 findings sometimes to exercise the no_op path
         return [] if rand < 0.2
 
         count = rand(1..3)

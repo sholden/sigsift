@@ -1,0 +1,181 @@
+#!/usr/bin/env ruby
+# Run the scanning agent against a URL or an existing Source. Persists nothing.
+#
+# Usage:
+#   bin/scan --source ID
+#   bin/scan --url https://... --opportunity ID [--notes "..."] [--criteria "..."]
+#   bin/scan --source ID --no-prior-findings --max-findings 10 --json
+
+require_relative "../config/environment"
+require "optparse"
+
+options = {
+  source_id: nil,
+  url: nil,
+  opportunity_id: nil,
+  notes: nil,
+  description: nil,
+  criteria: nil,
+  prior_findings_path: nil,
+  no_prior_findings: false,
+  model: nil,
+  max_findings: nil,
+  max_tool_calls: nil,
+  max_seconds: nil,
+  quiet: false,
+  json: false
+}
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: bin/scan [options]"
+
+  opts.on("--source ID", Integer, "Source ID (pulls URL/notes/criteria from DB)") { |v| options[:source_id] = v }
+  opts.on("--url URL", "Override or set URL") { |v| options[:url] = v }
+  opts.on("--opportunity ID", Integer, "Opportunity ID (required if no --source)") { |v| options[:opportunity_id] = v }
+  opts.on("--notes NOTES", "Override source notes") { |v| options[:notes] = v }
+  opts.on("--description DESC", "Override source description") { |v| options[:description] = v }
+  opts.on("--criteria TEXT", "Override opportunity criteria text") { |v| options[:criteria] = v }
+  opts.on("--prior-findings PATH", "JSON file with prior findings to inject as agent_context") { |v| options[:prior_findings_path] = v }
+  opts.on("--no-prior-findings", "Force empty prior findings") { options[:no_prior_findings] = true }
+  opts.on("--model MODEL", "Override the agent model (e.g. claude-sonnet-4-6)") { |v| options[:model] = v }
+  opts.on("--max-findings N", Integer, "Override the findings cap") { |v| options[:max_findings] = v }
+  opts.on("--max-tool-calls N", Integer, "Override the tool-call cap") { |v| options[:max_tool_calls] = v }
+  opts.on("--max-seconds N", Integer, "Override the wall-clock timeout (seconds)") { |v| options[:max_seconds] = v }
+  opts.on("--quiet", "Only show the final result") { options[:quiet] = true }
+  opts.on("--json", "Emit structured JSON to stdout") { options[:json] = true }
+  opts.on("-h", "--help", "Show this help") { puts opts; exit }
+end.parse!
+
+abort "Either --source or (--url + --opportunity) is required" unless options[:source_id] || (options[:url] && options[:opportunity_id])
+
+# Resolve source + opportunity
+if options[:source_id]
+  source = Source.find(options[:source_id])
+  opportunity = source.opportunity
+else
+  opportunity = Opportunity.find(options[:opportunity_id])
+  source = Source.new(
+    opportunity: opportunity,
+    name: "ad-hoc",
+    url: options[:url],
+    scan_frequency_days: 7,
+    status: "active"
+  )
+end
+
+# Apply overrides (in-memory only, never saved)
+source.url = options[:url] if options[:url]
+source.notes = options[:notes] if options[:notes]
+source.description = options[:description] if options[:description]
+opportunity.criteria_text = options[:criteria] if options[:criteria]
+
+# Build prior context
+prior_context = if options[:no_prior_findings] || (options[:url] && !options[:prior_findings_path])
+                  nil
+                elsif options[:prior_findings_path]
+                  File.read(options[:prior_findings_path])
+                elsif options[:source_id]
+                  source.scan_runs.where(status: :completed).order(created_at: :desc).pick(:agent_context)
+                end
+
+# Build budget overrides
+budget = Scanning::ScanBudget.default
+budget = budget.merge(max_findings: options[:max_findings]) if options[:max_findings]
+budget = budget.merge(max_tool_calls: options[:max_tool_calls]) if options[:max_tool_calls]
+budget = budget.merge(max_seconds: options[:max_seconds]) if options[:max_seconds]
+
+def mask_key(key)
+  return "missing" if key.blank?
+  return "#{key[0, 8]}…#{key[-4, 4]} (#{key.length} chars)" if key.length > 12
+  "#{"*" * key.length} (#{key.length} chars)"
+end
+
+unless options[:quiet] || options[:json]
+  puts "─" * 70
+  puts "Sigsift bin/scan — read-only agent run"
+  puts "─" * 70
+  puts "Source: #{source.name} (#{source.url})"
+  puts "Opportunity: #{opportunity.name}"
+  puts "Model: #{options[:model] || Rails.application.config.x.scanning.agent_model}"
+  puts "API key: #{mask_key(ENV["ANTHROPIC_API_KEY"])}"
+  puts "Budget: $#{budget.max_dollars}, #{budget.max_seconds}s, #{budget.max_tool_calls} calls, #{budget.max_findings} findings"
+  puts "Prior context: #{prior_context ? "yes (#{prior_context.length} chars)" : "none"}"
+  puts "─" * 70
+end
+
+started = Time.current
+strategy = Scanning::Strategies::PlaywrightAgent.new(budget: budget, model: options[:model])
+result = strategy.call(source: source, opportunity: opportunity, previous_context: prior_context)
+elapsed = Time.current - started
+
+if options[:json]
+  payload = case result
+            when Scanning::ScanResult::Findings
+              { outcome: "findings", findings: result.findings, summary: result.summary,
+                metrics: result.metrics, elapsed_seconds: elapsed.round(1) }
+            when Scanning::ScanResult::Escalated
+              { outcome: "escalated", reason: result.reason, metrics: result.metrics,
+                elapsed_seconds: elapsed.round(1) }
+            when Scanning::ScanResult::Failed
+              { outcome: "failed", error_message: result.error_message, metrics: result.metrics,
+                elapsed_seconds: elapsed.round(1) }
+            end
+  puts JSON.pretty_generate(payload)
+  exit
+end
+
+unless options[:quiet]
+  puts ""
+  puts "─" * 70
+  puts "Trace (#{result.messages.length} messages):"
+  puts "─" * 70
+  result.messages.each_with_index do |msg, i|
+    role = msg[:role] || msg["role"]
+    content = msg[:content] || msg["content"]
+    tool_calls = msg[:tool_calls] || msg["tool_calls"]
+
+    puts "[#{i}] #{role}"
+    if content.is_a?(String) && !content.empty?
+      content.to_s.lines.first(8).each { |l| puts "    #{l.chomp}" }
+      puts "    ..." if content.lines.count > 8
+    end
+    if tool_calls.is_a?(Hash) && !tool_calls.empty?
+      tool_calls.each do |_id, call|
+        name = call.is_a?(Hash) ? (call[:name] || call["name"]) : nil
+        args = call.is_a?(Hash) ? (call[:arguments] || call["arguments"]) : nil
+        puts "    → #{name}(#{args.to_json[0, 200]})"
+      end
+    end
+  end
+end
+
+puts ""
+puts "─" * 70
+puts "Result"
+puts "─" * 70
+
+case result
+when Scanning::ScanResult::Findings
+  puts "Outcome: SUCCESS — #{result.findings.length} findings"
+  puts "Summary: #{result.summary}"
+  puts ""
+  result.findings.each_with_index do |f, i|
+    puts "  ##{i + 1} #{f[:title]} (confidence #{f[:confidence_score]})"
+    puts "      Client: #{f[:client_name]}" if f[:client_name].present?
+    puts "      Location: #{f[:location]}" if f[:location].present?
+    puts "      Budget: #{f[:estimated_budget]}" if f[:estimated_budget].present?
+    puts "      Deadline: #{f[:deadline_text]}" if f[:deadline_text].present?
+  end
+when Scanning::ScanResult::Escalated
+  puts "Outcome: ESCALATED"
+  puts "Reason: #{result.reason}"
+when Scanning::ScanResult::Failed
+  puts "Outcome: FAILED"
+  puts "Error: #{result.error_message}"
+end
+
+puts ""
+puts "Metrics: #{result.metrics[:tool_calls_count]} tool calls · " \
+     "#{result.metrics[:total_input_tokens]} in / #{result.metrics[:total_output_tokens]} out tokens · " \
+     "$#{(result.metrics[:total_cost_cents] / 100.0).round(4)} · " \
+     "#{elapsed.round(1)}s wall"

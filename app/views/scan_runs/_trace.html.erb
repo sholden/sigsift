@@ -1,0 +1,40 @@
+<div class="text-xs">
+  <% if trace.nil? %>
+    <p class="text-gray-400 italic">No trace recorded for this scan.</p>
+  <% else %>
+    <div class="mb-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-gray-600">
+      <div><span class="font-medium">Tool calls:</span> <%= scan_run.tool_calls_count %></div>
+      <div><span class="font-medium">Input tokens:</span> <%= number_with_delimiter(scan_run.total_input_tokens) %></div>
+      <div><span class="font-medium">Output tokens:</span> <%= number_with_delimiter(scan_run.total_output_tokens) %></div>
+      <div><span class="font-medium">Cost:</span> $<%= ((scan_run.total_cost_cents || 0) / 100.0).round(4) %></div>
+    </div>
+
+    <% messages = trace.messages %>
+    <% if messages.empty? %>
+      <p class="text-gray-400 italic">No messages stored.</p>
+    <% else %>
+      <div class="space-y-2 max-h-[600px] overflow-y-auto bg-gray-900 text-gray-100 rounded p-3 font-mono">
+        <% messages.each_with_index do |msg, i| %>
+          <% border = case msg["role"]
+                     when "user" then "border-blue-500"
+                     when "assistant" then "border-green-500"
+                     when "tool" then "border-yellow-500"
+                     when "system" then "border-purple-500"
+                     else "border-gray-500"
+                     end %>
+          <div class="border-l-2 <%= border %> pl-2">
+            <div class="text-gray-400">[<%= i %>] <%= msg["role"] %><% if msg["input_tokens"] || msg["output_tokens"] %> · in=<%= msg["input_tokens"] %> out=<%= msg["output_tokens"] %><% end %></div>
+            <% if msg["content"].present? %>
+              <pre class="whitespace-pre-wrap break-words text-gray-100"><%= msg["content"].to_s.truncate(2000) %></pre>
+            <% end %>
+            <% if msg["tool_calls"].present? && msg["tool_calls"].any? %>
+              <% msg["tool_calls"].each do |_id, call| %>
+                <div class="text-yellow-400 mt-1">→ <%= call["name"] %>(<%= call["arguments"].to_json.truncate(400) %>)</div>
+              <% end %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+</div>

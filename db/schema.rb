@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_05_210410) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_05_235857) do
   create_table "accounts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name"
@@ -87,6 +87,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_05_210410) do
     t.index ["source_id"], name: "index_potential_leads_on_source_id"
   end
 
+  create_table "scan_run_traces", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "messages_json"
+    t.text "metadata_json"
+    t.integer "scan_run_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["scan_run_id"], name: "index_scan_run_traces_on_scan_run_id", unique: true
+  end
+
   create_table "scan_runs", force: :cascade do |t|
     t.text "agent_context"
     t.datetime "completed_at"
@@ -97,6 +106,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_05_210410) do
     t.datetime "started_at"
     t.string "status", default: "pending", null: false
     t.text "summary"
+    t.integer "tool_calls_count", default: 0, null: false
+    t.integer "total_cost_cents", default: 0, null: false
+    t.integer "total_input_tokens", default: 0, null: false
+    t.integer "total_output_tokens", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["source_id", "created_at"], name: "index_scan_runs_on_source_id_and_created_at"
     t.index ["source_id"], name: "index_scan_runs_on_source_id"
@@ -113,6 +126,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_05_210410) do
   end
 
   create_table "sources", force: :cascade do |t|
+    t.integer "consecutive_failure_count", default: 0, null: false
     t.datetime "created_at", null: false
     t.text "description"
     t.datetime "last_scanned_at"
@@ -145,6 +159,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_05_210410) do
   add_foreign_key "opportunities", "accounts"
   add_foreign_key "potential_leads", "scan_runs", column: "found_by_id"
   add_foreign_key "potential_leads", "sources"
+  add_foreign_key "scan_run_traces", "scan_runs"
   add_foreign_key "scan_runs", "sources"
   add_foreign_key "sessions", "users"
   add_foreign_key "sources", "opportunities"

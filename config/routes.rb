@@ -7,6 +7,9 @@ Rails.application.routes.draw do
   resources :opportunities do
     resources :sources do
       member { post :scan }
+      resources :scan_runs, only: [] do
+        member { get :trace }
+      end
     end
   end
 

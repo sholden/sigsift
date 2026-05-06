@@ -1,0 +1,5 @@
+<%= turbo_frame_tag "scan_run_trace_#{@scan_run.id}" do %>
+  <div class="bg-gray-50 border border-gray-200 rounded p-3 mt-2">
+    <%= render "trace", scan_run: @scan_run, trace: @trace %>
+  </div>
+<% end %>
