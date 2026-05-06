@@ -14,9 +14,9 @@ Rails.application.config.x.scanning.tap do |c|
   # carries the full conversation history, so input tokens compound across turns.
   c.budget = {
     max_dollars: 0.50,
-    max_seconds: 360,
-    max_tool_calls: 30,
-    max_findings: 5,
-    tool_call_delay_seconds: 8
+    max_seconds: 600,
+    max_tool_calls: 100,
+    max_findings: 3,
+    tool_call_delay_seconds: 2
   }
 end

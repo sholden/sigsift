@@ -23,7 +23,15 @@
                      else "border-gray-500"
                      end %>
           <div class="border-l-2 <%= border %> pl-2">
-            <div class="text-gray-400">[<%= i %>] <%= msg["role"] %><% if msg["input_tokens"] || msg["output_tokens"] %> · in=<%= msg["input_tokens"] %> out=<%= msg["output_tokens"] %><% end %></div>
+            <div class="text-gray-400">
+              [<%= i %>] <%= msg["role"] %>
+              <% if msg["input_tokens"] || msg["output_tokens"] || msg["cached_tokens"] %>
+                · in=<%= msg["input_tokens"] %>
+                <% if msg["cached_tokens"].to_i > 0 %>cached=<%= msg["cached_tokens"] %><% end %>
+                <% if msg["cache_creation_tokens"].to_i > 0 %>writes=<%= msg["cache_creation_tokens"] %><% end %>
+                out=<%= msg["output_tokens"] %>
+              <% end %>
+            </div>
             <% if msg["content"].present? %>
               <pre class="whitespace-pre-wrap break-words text-gray-100"><%= msg["content"].to_s.truncate(2000) %></pre>
             <% end %>

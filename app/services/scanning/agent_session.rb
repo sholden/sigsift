@@ -1,7 +1,8 @@
 module Scanning
   class AgentSession
     attr_reader :page, :budget
-    attr_accessor :tool_call_count, :total_input_tokens, :total_output_tokens, :total_cached_tokens, :navigation_breadcrumbs
+    attr_accessor :tool_call_count, :total_input_tokens, :total_output_tokens
+    attr_accessor :total_cached_tokens, :total_cache_creation_tokens, :navigation_breadcrumbs
     attr_accessor :terminator
 
     def initialize(page:, budget:)
@@ -11,6 +12,7 @@ module Scanning
       @total_input_tokens = 0
       @total_output_tokens = 0
       @total_cached_tokens = 0
+      @total_cache_creation_tokens = 0
       @navigation_breadcrumbs = []
       @terminator = nil
     end
@@ -21,9 +23,18 @@ module Scanning
       !@terminator.nil?
     end
 
+    # Anthropic billing model:
+    #   input_tokens          → fresh (uncached) input, billed at full input rate
+    #   cache_creation_tokens → tokens written to cache, billed at 1.25× input rate
+    #   cached_tokens         → tokens read from cache, billed at 0.10× input rate
+    #   output_tokens         → output tokens at output rate
+    # ruby-llm exposes these as separate fields, so we accumulate each and price independently.
     def total_cost_dollars
       input_rate, output_rate, cached_rate = pricing_for(Rails.application.config.x.scanning.agent_model)
-      ((@total_input_tokens - @total_cached_tokens) * input_rate +
+      cache_write_rate = input_rate * 1.25
+
+      (@total_input_tokens * input_rate +
+       @total_cache_creation_tokens * cache_write_rate +
        @total_cached_tokens * cached_rate +
        @total_output_tokens * output_rate) / 1_000_000.0
     end

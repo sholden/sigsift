@@ -40,8 +40,10 @@ module Scanning
           enforce_budget!(session, started_at)
         end
         chat.on_tool_result do |_result|
+          mark_latest_tool_result_cacheable(chat)
           # Throttle between turns to stay under Anthropic's tokens-per-minute rate limit.
-          # Each turn's input carries the full prior conversation, so input tokens compound.
+          # With prompt caching applied (above), cached prefix tokens count at ~10% of rate-limit cost,
+          # so this delay can usually be lowered once caching is verified working.
           sleep(@budget.tool_call_delay_seconds) if @budget.tool_call_delay_seconds.positive?
         end
 
@@ -74,10 +76,19 @@ module Scanning
       end
 
       def accumulate_token_usage(session, chat)
+        # Reset to avoid double-accumulation if this is called multiple times
+        session.total_input_tokens = 0
+        session.total_output_tokens = 0
+        session.total_cached_tokens = 0
+        session.total_cache_creation_tokens = 0
+
         chat.messages.each do |msg|
           session.total_input_tokens += msg.input_tokens.to_i if msg.respond_to?(:input_tokens)
           session.total_output_tokens += msg.output_tokens.to_i if msg.respond_to?(:output_tokens)
           session.total_cached_tokens += msg.cached_tokens.to_i if msg.respond_to?(:cached_tokens)
+          if msg.respond_to?(:cache_creation_tokens)
+            session.total_cache_creation_tokens += msg.cache_creation_tokens.to_i
+          end
         end
       end
 
@@ -129,6 +140,8 @@ module Scanning
           tool_calls_count: session.tool_call_count,
           total_input_tokens: session.total_input_tokens,
           total_output_tokens: session.total_output_tokens,
+          total_cached_tokens: session.total_cached_tokens,
+          total_cache_creation_tokens: session.total_cache_creation_tokens,
           total_cost_cents: session.total_cost_cents
         }
       end
@@ -157,7 +170,8 @@ module Scanning
           tool_call_id: msg.tool_call_id,
           input_tokens: msg.respond_to?(:input_tokens) ? msg.input_tokens : nil,
           output_tokens: msg.respond_to?(:output_tokens) ? msg.output_tokens : nil,
-          cached_tokens: msg.respond_to?(:cached_tokens) ? msg.cached_tokens : nil
+          cached_tokens: msg.respond_to?(:cached_tokens) ? msg.cached_tokens : nil,
+          cache_creation_tokens: msg.respond_to?(:cache_creation_tokens) ? msg.cache_creation_tokens : nil
         }
       rescue
         { role: "unknown", content: msg.inspect }
@@ -168,6 +182,49 @@ module Scanning
           h = finding.respond_to?(:to_h) ? finding.to_h : finding
           h.transform_keys(&:to_sym)
         end
+      end
+
+      # Keep exactly one cache_control marker — on the most recent tool_result message —
+      # so that on the next API call, the entire prefix up to and including this tool result
+      # is read from Anthropic's cache at ~10% of the normal token rate. The cached prefix
+      # is the longest possible (covers all earlier turns), so a single marker captures the
+      # maximum cache benefit.
+      #
+      # Anthropic rejects requests with more than 4 cache_control blocks (HTTP 400), so we
+      # actively unwrap older tool_result messages each turn to maintain the single-marker
+      # invariant. Wrapping in Content::Raw bypasses ruby-llm's tool_result formatter so
+      # cache_control reaches the wire verbatim.
+      def mark_latest_tool_result_cacheable(chat)
+        tool_results = chat.messages.select(&:tool_result?)
+        return if tool_results.empty?
+
+        latest = tool_results.last
+
+        # Unwrap older tool_results that we previously marked.
+        tool_results[0...-1].each do |msg|
+          next unless msg.content.is_a?(RubyLLM::Content::Raw)
+          msg.content = unwrap_tool_result_text(msg.content.value) || ""
+        end
+
+        # Wrap the latest with cache_control (skip if already wrapped from a prior call).
+        return if latest.content.is_a?(RubyLLM::Content::Raw)
+
+        latest.content = RubyLLM::Content::Raw.new([
+          {
+            type: "tool_result",
+            tool_use_id: latest.tool_call_id,
+            content: [{ type: "text", text: latest.content.to_s }],
+            cache_control: { type: "ephemeral" }
+          }
+        ])
+      rescue NameError
+        # RubyLLM::Content::Raw not loaded — silently skip caching, fall back to plain content.
+        nil
+      end
+
+      def unwrap_tool_result_text(blocks)
+        return nil unless blocks.is_a?(Array) && blocks.first.is_a?(Hash)
+        blocks.first.dig(:content, 0, :text)
       end
 
       def cached_system_content(text)

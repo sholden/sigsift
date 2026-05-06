@@ -73,3 +73,5 @@ gem "docx"
 group :development do
   gem "annotaterb", require: false
 end
+
+gem "ruby-lsp", "~> 0.26.9", group: :development

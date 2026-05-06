@@ -175,7 +175,12 @@ when Scanning::ScanResult::Failed
 end
 
 puts ""
-puts "Metrics: #{result.metrics[:tool_calls_count]} tool calls · " \
-     "#{result.metrics[:total_input_tokens]} in / #{result.metrics[:total_output_tokens]} out tokens · " \
-     "$#{(result.metrics[:total_cost_cents] / 100.0).round(4)} · " \
-     "#{elapsed.round(1)}s wall"
+m = result.metrics
+fresh_in   = m[:total_input_tokens].to_i
+cached_in  = m[:total_cached_tokens].to_i
+created_in = m[:total_cache_creation_tokens].to_i
+out        = m[:total_output_tokens].to_i
+cache_pct  = (fresh_in + cached_in + created_in).positive? ? (cached_in * 100.0 / (fresh_in + cached_in + created_in)).round(1) : 0.0
+
+puts "Metrics: #{m[:tool_calls_count]} tool calls · #{elapsed.round(1)}s wall · $#{(m[:total_cost_cents] / 100.0).round(4)}"
+puts "Tokens : fresh=#{fresh_in}  cached=#{cached_in}  cache_writes=#{created_in}  output=#{out}  (cache hit: #{cache_pct}%)"
